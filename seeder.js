@@ -9,7 +9,7 @@ dotenv.config({ path: './config/config.env' });
 // Load models
 const Bootcamp = require('./models/Bootcamp');
 const Course = require('./models/Course');
-const User = require('./models/Users');
+const User = require('./models/User');
 const Review = require('./models/Review');
 
 // Connect to DB

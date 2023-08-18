@@ -1,4 +1,4 @@
-const User = require('../models/Users')
+const User = require('../models/User')
 const ErrorResponse = require('../utils/errorResponse')
 const asyncHandler = require('../middleware/async')
 const bcrypt = require('bcryptjs')
