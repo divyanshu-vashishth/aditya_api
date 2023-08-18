@@ -5,7 +5,7 @@ const {
 } = require('../controllers/users')
 
 const advancedResults = require('../middleware/advancedResults')
-const User = require('../models/Users')
+const User = require('../models/User')
 
 const router = express.Router({mergeParams:true})
 
