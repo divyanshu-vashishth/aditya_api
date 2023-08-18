@@ -1,7 +1,7 @@
 const Course = require('../models/Course')
 const ErrorResponse = require('../utils/errorResponse')
 const asyncHandler = require('../middleware/async')
-const Bootcamp = require('../models/bootcamps')
+const Bootcamp = require('../models/Bootcamp')
 
 
 // @desc Get all courses
