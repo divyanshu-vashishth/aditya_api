@@ -1,0 +1,270 @@
+-> Setting up express
+app.get('/',(req,res)=>{
+    // res.send('<h1>Hello from express</h1>')
+    // res.sendStatus(400)
+    res.status(400).json({success:false})
+})
+
+Route structurevv
+GET/POST/PUT/DELETE
+/api/v1/bootcamps
+/api/v1/courses
+/api/v1/auth
+/api/v1/users
+
+// Middlewares 
+const logger = (req, res, next) => {
+    req.hello = 'Hello World' // this variables is accessible throughout the route
+    console.log('Middleware ran')
+    next()
+}
+
+app.use(logger)
+
+//  res.status(200).json({success:true,msg:'Show all Bootcamps', hello: req.hello})
+
+More Advanced logger
+https://github.com/expressjs/morgan
+
+-> Adding MongoDB
+Login on MongoDB
+create a cluster
+Database access - add a new users
+network access - add ip address - allow access from anywhere
+create a mongodb uri
+
+-> Connecting database with mongoose
+const mongoose = require('mongoose')
+
+const connectDB = async () => {
+    const conn = await mongoose.connect(process.env.MONGO_URI);
+    console.log(`MongoDB Connected: ${conn.connection.host}`)
+}
+
+module.exports = connectDB
+
+-> Adding colours to the console
+color.js 
+npm i colors
+
+-> Error Handlers Express
+https://expressjs.com/en/guide/error-handling.html
+exports.getBootcamp = async (req,res,next) =>{
+    try{
+        const bootcamp = await Bootcamp.findById(req.params.id);
+        if(!bootcamp){
+            //for correctly formatted id not in db
+            return res.status(400).json({success:false})
+        }
+        res.status(200).json({success:true,data: bootcamp})
+    } catch(err){
+        // res.status(400).json({success:false})
+        next(err) //custom express error handler
+    }
+}
+
+console.log(err.name) in error.js
+
+
+-> Async/Await Middleware
+DRY - Dont repeat yourself
+https://www.acuriousanimal.com/blog/20180315/express-async-middleware
+Create a middleware async.js
+now wrap the function in asyncHadler()
+
+-> Mongoose Middleware
+changing the data before its added to the database 
+adding another field, etc
+validationg the data 
+https://mongoosejs.com/docs/middleware.html
+
+
+BootcampSchema.pre('save', your function here
+  next();
+);
+
+1. slugify
+npm install slugify
+2. Geocoder
+https://github.com/nchaulet/node-geocoder
+npm install node-geocoder
+mapquest api
+
+Schema referrring to other schema
+  bootcamp: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'Bootcamp',
+    required: true
+  },
+
+
+ReRouting in Mongoose
+// Include other resource router
+const courseRouter = require('./courses')
+
+const router = express.Router()
+
+// Reroute into other resource routers
+router.use('/:bootcampId/courses',courseRouter)
+
+
+Populate, Virtuals and Cascade
+
+    query = Course.find().populate({
+        path: 'bootcamp',
+        select: 'name description'
+    });
+
+
+-> CHECK THIS CODE COZ IT WAS NOT WORKING
+
+
+// Course Aggregation is not working so middleware is implemented in the controller itself
+
+// Static method to get avg of course tuitions
+CourseSchema.statics.getAverageCost = async function(bootcampId) {
+  const obj = await this.aggregate([
+    {
+      $match: { bootcamp: bootcampId }
+    },
+    {
+      $group: {
+        _id: '$bootcamp',
+        averageCost: { $avg: '$tuition' }
+      }
+    }
+  ]);
+  console.log(obj)
+
+  const averageCost = obj[0]
+    ? Math.ceil(obj[0].averageCost / 10) * 10
+    : undefined;
+  // try {
+  //   await this.model("Bootcamp").findByIdAndUpdate(bootcampId, {
+  //     averageCost,
+  //   });
+  try {
+    const Bootcamp = mongoose.model('Bootcamp');
+    await Bootcamp.findByIdAndUpdate(bootcampId, {
+        averageCost,
+    });
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+// Call getAverageCost after save
+CourseSchema.post('save', async function() {
+  console.log(`Adding AverageCost Before Saving`)
+  // await this.constructor.getAverageCost(this.bootcamp);
+  const bootcampId = this.bootcamp
+  console.log(typeof(bootcampId))
+
+  const obj = await this.model('Course').aggregate([
+    {
+      $match: { bootcamp: bootcampId }
+    },
+    {
+      $group: {
+        _id: '$bootcamp',
+        averageCost: { $avg: '$tuition' }
+      }
+    }
+  ]);
+  console.log(obj)
+
+
+  const averageCost = obj[0]
+    ? Math.ceil(obj[0].averageCost / 10) * 10
+    : undefined;
+  // try {
+  //   await this.model("Bootcamp").findByIdAndUpdate(bootcampId, {
+  //     averageCost,
+  //   });
+  try {
+    const Bootcamp = mongoose.model('Bootcamp');
+    await Bootcamp.findByIdAndUpdate(bootcampId, {
+        averageCost,
+    });
+  } catch (err) {
+    console.log(err);
+  }
+});
+
+// Call getAverageCost after remove
+CourseSchema.post('findOneAndDelete', async function () {
+  console.log(`Adding AverageCost After Deletion`)
+  // await this.model('Course').getAverageCost(this.bootcamp); // this construvtor is not a funtion aisa kuch error aa rha hai.... theek kerdo koi....
+  // const bootcampId = this.bootcamp
+  const bootcampId = this.getFilter()["_id"]
+
+  console.log(`Bootcamp : ${bootcampId}`)
+  const obj = await this.model('Course').aggregate([
+    {
+      $match: { bootcamp: new mongoose.Types.ObjectId(bootcampId) }
+    },
+    {
+      $group: {
+        _id: '$bootcamp',
+        averageCost: { $avg: '$tuition' }
+      }
+    }
+  ]);
+  console.log(obj)
+
+
+  const averageCost = obj[0]
+    ? Math.ceil(obj[0].averageCost / 10) * 10
+    : undefined;
+  // try {
+  //   await this.model("Bootcamp").findByIdAndUpdate(bootcampId, {
+  //     averageCost,
+  //   });
+  try {
+    const Bootcamp = mongoose.model('Bootcamp');
+    await Bootcamp.findByIdAndUpdate(bootcampId, {
+        averageCost,
+    });
+  } catch (err) {
+    console.log(err);
+  }
+});
+ 
+// // Call getAverageCost after tuition update
+// CourseSchema.post("findOneAndUpdate", async function (doc) {
+//   if (this.tuition != doc.tuition) {
+//     await doc.constructor.getAverageCost(doc.bootcamp);
+//   }
+// });
+
+
+-> FILE UPLOAD 
+npm i express-fileupload
+
+const fileupload = require('express-fileupload')
+// File upload
+app.use(fileupload())
+
+file.name = `photo_${bootcamp,_id}` // this doesnot gives the file extension
+with the extension use the path nodejs lib
+file.name = `photo_${bootcamp,_id}${path.parse(file.name).ext}`
+
+
+
+
+-> PIECE OF CODE TO MIDDLEWARE ADDED IN ROUTES OF EACH MODULE
+
+-> Authentication Implementation 
+npm i jsonwebtoken bcryptjs
+
+Create a user model
+Create Bcrypt password encrypting
+create a jsonwebtoken - https://github.com/auth0/node-jsonwebtoken
+
+
+SECURITY
+
+NO SQL INJECTION $ in query matches the email or password field - express-mongo-sanitize
+XSS Protection Security Headers - helmet
+XSS Clean - prvents any scripts in user inputs
+Rate Limits HPP CORS - npm i express-rate-limit hpp

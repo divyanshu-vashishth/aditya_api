@@ -11,7 +11,7 @@ const {
 } = require('../controllers/bootcamps')
 
 const advancedResults = require('../middleware/advancedResults')
-const Bootcamp = require('../models/Bootcamp')
+const Bootcamp = require('../models/bootcamp')
 
 // Include other resource router
 const courseRouter = require('./courses')
