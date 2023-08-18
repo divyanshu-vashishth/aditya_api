@@ -1,4 +1,4 @@
-const Bootcamp = require('../models/Bootcamp')
+const Bootcamp = require('../models/bootcamps')
 const ErrorResponse = require('../utils/errorResponse')
 const asyncHandler = require('../middleware/async')
 const geocoder = require('../utils/geocoder')
